@@ -1,0 +1,26 @@
+﻿@model IEnumerable<ProjectZero.Models.ArticleTeaser>
+@{
+    ViewBag.Title = "Home Page";
+}
+
+@foreach (var article in Model)
+{
+    <div class="frontpage">
+        <h1>@article.Title</h1>
+        <p>@article.TeaserText</p>
+        <hr />
+        <p><small>Date Published: @article.Published.DateTime, Last Edited: @article.LastEdited.DateTime</small>        
+        </p>
+        <p><small>
+        @foreach (var tag in article.Tags)
+        {
+            <span>#@tag, </span>
+        }
+        </small></p>
+    </div>
+
+    <div>
+        <hr />
+    </div>
+}
+
