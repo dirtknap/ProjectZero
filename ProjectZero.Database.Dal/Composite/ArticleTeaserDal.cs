@@ -14,7 +14,8 @@ namespace ProjectZero.Database.Dal.Composite
 
         public List<ArticleTeaserDto> GetAllTeasers()
         {
-            return ReadIntoList(BaseQuery(), new Dictionary<string, object>());
+            var result = ReadIntoList(BaseQuery(), new Dictionary<string, object>());
+            return result ??  new List<ArticleTeaserDto>();
         }
 
         public List<ArticleTeaserDto> GetArticleTeasers(List<int> idList)

@@ -1,6 +1,8 @@
 ﻿using System.Web.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using ProjectZero.Controllers;
+using ProjectZero.Database.Dal.Composite.Interfaces;
 
 namespace ProjectZero.Tests.Controllers
 {
@@ -11,10 +13,11 @@ namespace ProjectZero.Tests.Controllers
         public void Index()
         {
             // Arrange
-            HomeController controller = new HomeController();
+            var dal = new Mock<IArticleTeaserDal>();
+            var controller = new HomeController(dal.Object);
 
             // Act
-            ViewResult result = controller.Index() as ViewResult;
+            var result = controller.About() as ViewResult;
 
             // Assert
             Assert.IsNotNull(result);
@@ -24,13 +27,14 @@ namespace ProjectZero.Tests.Controllers
         public void About()
         {
             // Arrange
-            HomeController controller = new HomeController();
+            var dal = new Mock<IArticleTeaserDal>();
+            var controller = new HomeController(dal.Object);
 
             // Act
-            ViewResult result = controller.About() as ViewResult;
+            var result = controller.About() as ViewResult;
 
             // Assert
-            Assert.AreEqual("Your application description page.", result.ViewBag.Message);
+            Assert.AreEqual("Project Zero.", result.ViewBag.Message);
         }
 
     }

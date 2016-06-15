@@ -1,9 +1,14 @@
 using System;
 using System.Configuration;
+using System.Data.Entity;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Practices.Unity;
 using Microsoft.Practices.Unity.Configuration;
+using ProjectZero.Controllers;
 using ProjectZero.Database.Dal.Composite;
 using ProjectZero.Database.Dal.Composite.Interfaces;
+using ProjectZero.Models;
 
 namespace ProjectZero.App_Start
 {
@@ -41,6 +46,12 @@ namespace ProjectZero.App_Start
 
             // container.RegisterType<IProductRepository, ProductRepository>();
             container.RegisterType<IArticleTeaserDal, ArticleTeaserDal>(new InjectionConstructor(connectionString));
+
+            container.RegisterType<DbContext, ApplicationDbContext>(new HierarchicalLifetimeManager());
+            container.RegisterType<UserManager<ApplicationUser>>(new HierarchicalLifetimeManager());
+            container.RegisterType<IUserStore<ApplicationUser>, UserStore<ApplicationUser>>(new HierarchicalLifetimeManager());
+            container.RegisterType<AccountController>(new InjectionConstructor());
+            container.RegisterType<ManageController>(new InjectionConstructor());
         }
     }
 }

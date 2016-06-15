@@ -6,24 +6,26 @@ using Microsoft.Ajax.Utilities;
 using ProjectZero.Database.Dal.Composite;
 using ProjectZero.Database.Dal.Composite.Interfaces;
 using ProjectZero.Database.Dal.Tables.Interfaces;
+using ProjectZero.Database.Dto.Composite;
 using ProjectZero.Models;
 
 namespace ProjectZero.Controllers
 {
     public class HomeController : Controller
     {
-        private IArticleTeaserDal teaserDalDal;
+        private IArticleTeaserDal teaserDal;
 
 
-        public HomeController(IArticleTeaserDal teaserDalDal)
+        public HomeController(IArticleTeaserDal teaserDal)
         {
-            this.teaserDalDal = teaserDalDal;
+            this.teaserDal = teaserDal;
         }
 
         public ActionResult Index()
         {
-            var results = teaserDalDal.GetAllTeasers();
+            var results = teaserDal.GetAllTeasers();
 
+              
             return View(results);
         }
 
