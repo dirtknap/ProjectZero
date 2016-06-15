@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 
 namespace ProjectZero.Database.Extensions
 {
@@ -14,14 +16,14 @@ namespace ProjectZero.Database.Extensions
         {
             List<T> results;
             SqlDataReader reader = null;
-            var fields = DbTable.BuildFieldList(typeof (T));
+            var fields = DbTable.BuildFieldList(typeof(T));
             var fieldList = string.Join(",", fields);
-            var table = DbTable.GetTableName(typeof (T));
+            var table = DbTable.GetTableName(typeof(T));
             var query = $"SELECT {fieldList} FROM {table}";
             try
             {
                 reader = conn.GetReader(query, null, transaction);
-                results = reader.ReflectRows<T>;
+                results = reader.ReflectRows<T>();
             }
             finally
             {
@@ -30,6 +32,67 @@ namespace ProjectZero.Database.Extensions
             results = results ?? new List<T>();
             return results;
         }
+
+        public static bool ReadIntoObject<T>(this SqlConnection conn, string query,
+            Dictionary<string, object> parameters, out T result, SqlTransaction txn = null) where T: new()
+        {    
+            SqlDataReader reader = null;
+            var wasRead = false;
+            result = default(T);
+            try
+            {
+                reader = conn.GetReader(query, parameters, txn);
+                wasRead = reader.ReflectRow<T>(out result);
+            }
+            finally
+            {
+                DisposeIfNotNull(reader);
+            }
+            return wasRead;
+        }
+
+        public static string InsertAndReturnIdent(this SqlConnection conn, object obj, SqlTransaction txn = null)
+        {
+            Dictionary<string, object> queryParams;
+            var query = DbTable.DoBuildInsertQuery(obj, out queryParams);
+            return conn.ExecuteNonQueryReturnIdent(query, queryParams, txn);
+        }
+
+        public static int ExecuteNonQuery(this SqlConnection conn, string query, Dictionary<string, object> parameters,
+            SqlTransaction txn = null)
+        {
+            using (var command = BuildCommand(conn, query, parameters, txn))
+            {
+                return command.ExecuteNonQuery();
+            }
+        }
+
+        public static string ExecuteNonQueryReturnIdent(this SqlConnection conn, string query, Dictionary<string, object> parameters, SqlTransaction txn)
+        {
+            using (var command = BuildCommand(conn, query, parameters, txn))
+            {
+                command.ExecuteNonQuery();
+                return ReadOne(conn, "SELECT @@IDENTITY as \"Ident\"", null, txn);
+            }
+        }
+
+        public static string ReadOne(this SqlConnection conn, string query, Dictionary<string, object> parameters,
+            SqlTransaction txn)
+        {
+            string result = "";
+            SqlDataReader reader = null;
+            try
+            {
+                reader = conn.GetReader(query, parameters, txn);
+                result = reader.ReadOne();
+            }
+            finally
+            {
+                DisposeIfNotNull(reader);
+            }
+            return result;
+        }
+
 
         public static SqlDataReader GetReader(this SqlConnection conn, string query,
             Dictionary<string, object> parameters, SqlTransaction transaction = null)
@@ -49,7 +112,8 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        private static SqlCommand BuildCommand(SqlConnection conn, string query, Dictionary<string, object> parameters, SqlTransaction transaction)
+        private static SqlCommand BuildCommand(SqlConnection conn, string query, Dictionary<string, object> parameters,
+            SqlTransaction transaction)
         {
             SqlCommand command = conn.CreateCommand();
             if (CommandTimeout > 0)
@@ -74,85 +138,10 @@ namespace ProjectZero.Database.Extensions
             return command;
         }
 
-        public static List<T> ReflectRows<T>(this SqlDataReader reader) where T : new()
+        private static void DisposeIfNotNull(IDisposable disposable)
         {
-            // Results of the query will be stowed here
-            List<T> results = new List<T>();
-
-            Type targetType = typeof(T);
-
-            // Get a mapping of fields->MemberInfo based on targetType
-            var fieldToMemberMap = ReflectType(targetType);
-
-            // We stow the reader field index -> MemberInfo so we only need to 
-            // loop through this once.
-            PropertyInfo[] readerIndexToMemberMap = null;
-
-            while (reader.Read())
-            {
-
-                // First tiem through, we build out member info map based on the
-                // fields returned
-                if (readerIndexToMemberMap == null)
-                {
-                    readerIndexToMemberMap = new PropertyInfo[reader.FieldCount];
-                    for (int j = 0; j < reader.FieldCount; j++)
-                    {
-                        var name = fieldToMemberMap.Where(kvp => kvp.Key.Equals(reader.GetName(j), StringComparison.InvariantCultureIgnoreCase))
-                            .Select(x => x.Key).FirstOrDefault();
-                        if (name != null)
-                        {
-                            readerIndexToMemberMap[j] = targetType.GetProperty(
-                                fieldToMemberMap[name].Name);
-                        }
-                        else
-                        {
-                            readerIndexToMemberMap[j] = null;
-                        }
-                    }
-                }
-
-                T obj = new T();//System.Activator.CreateInstance(targetType);
-                results.Add(obj);
-
-                // Loop through the fields and assign the field value to the 
-                // appropriate property of the object
-                for (int j = 0; j < reader.FieldCount; j++)
-                {
-                    if (readerIndexToMemberMap[j] != null)
-                    {
-                        object value = reader.GetValue(j);
-                        if (value.GetType() != typeof(DBNull))
-                        {
-                            readerIndexToMemberMap[j].SetValue(obj, value, null);
-                        }
-                    }
-                }
-            }
-
-            return results;
+            disposable?.Dispose();
         }
 
-        /// <summary>
-        /// Create a mapping of properties on a type that have a TableFieldAttribute 
-        /// associated with them.
-        /// </summary>
-        /// <param name="targetType"></param>
-        /// <returns></returns>
-        public static Dictionary<string, MemberInfo> ReflectType(Type targetType)
-        {
-            Dictionary<string, MemberInfo> fieldToMemberMap = new Dictionary<string, MemberInfo>();
-            var members = targetType.GetMembers();
-            foreach (var member in members)
-            {
-                var tableFieldAttributes = member.GetCustomAttributes(typeof(TableFieldAttribute), true);
-                if (tableFieldAttributes.Length > 0)
-                {
-                    TableFieldAttribute attribute = tableFieldAttributes[0] as TableFieldAttribute;
-                    fieldToMemberMap[attribute.FieldName] = member;
-                }
-            }
-            return fieldToMemberMap;
-        }
     }
 }
