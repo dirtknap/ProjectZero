@@ -16,15 +16,15 @@ namespace ProjectZero.Database.Extensions
             this.schema = schema;
         }
 
-        public virtual List<T> Get()
+        public string Insert(object item, SqlTransaction txn = null)
         {
-            using (var connection = GetConnection(connectionString))
+            using (var conn = GetConnection())
             {
-                return connection.ReadAll<T>();
+                return conn.InsertAndReturnIdent(item, txn);
             }
         }
 
-        protected T ReadIntoObject(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
+        public T SelectOne(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -32,12 +32,43 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        protected string Insert(object item, SqlTransaction txn = null)
+        public List<T> SelectList(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
-            string ident;
             using (var conn = GetConnection())
             {
-                return ident = conn.InsertAndReturnIdent(item, txn);
+                return conn.ReadIntoList<T>(query, parameters, txn);
+            }
+        }
+
+        public virtual List<T> SelectAll()
+        {
+            using (var connection = GetConnection(connectionString))
+            {
+                return connection.ReadAll<T>();
+            }
+        }
+
+        public void Update(object item, SqlTransaction txn = null)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Update(item, txn);
+            }
+        }
+
+        public void Delete(object item, SqlTransaction txn = null)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Delete(item, txn);
+            }    
+        }
+
+        protected void ExecuteSpNonQuery(string sproc, Dictionary<string, object> parameters, SqlTransaction txn)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.ExecuteSpNonQuery(sproc, parameters, txn);
             }
         }
 
@@ -55,9 +86,7 @@ namespace ProjectZero.Database.Extensions
 
             return txn.Connection.ExecuteNonQueryReturnIdent(query, parameters, txn);
         }
-
-
-
+        
         protected SqlConnection GetConnection()
         {
             return GetConnection(connectionString);

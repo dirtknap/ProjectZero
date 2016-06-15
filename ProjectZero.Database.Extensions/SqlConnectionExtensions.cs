@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography;
 
 namespace ProjectZero.Database.Extensions
 {
@@ -12,43 +9,66 @@ namespace ProjectZero.Database.Extensions
     {
         public static int CommandTimeout { get; set; }
 
-        public static List<T> ReadAll<T>(this SqlConnection conn, SqlTransaction transaction = null) where T : new()
+
+        public static T ReadIntoObject<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
+            SqlTransaction txn = null) where T : new()
+        {
+            T item;
+            ReadIntoObject<T>(conn, query, parameters, out item, txn);
+            return item;
+        }
+
+        public static bool ReadIntoObject<T>(this SqlConnection conn, string query,
+            Dictionary<string, object> parameters, out T result, SqlTransaction txn = null) where T : new()
+        {
+            var wasRead = false;
+            result = default(T);
+            using (var reader = conn.GetReader(query, parameters, txn))
+            {
+                wasRead = reader.ReflectRow<T>(out result);
+            }
+            return wasRead;
+        }
+
+        public static List<T> ReadIntoList<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
+            SqlTransaction txn = null) where T : new()
+        {
+            var results = new List<T>();
+            
+            using (var reader = conn.GetReader(query, parameters, txn))
+            {
+                results = reader.ReflectRows<T>();
+            }
+            return results ?? new List<T>();
+        }
+
+        public static void Update(this SqlConnection conn, object item, SqlTransaction txn = null)
+        {
+            Dictionary<string, object> parameters;
+            var query = DbTable.DoBuildUpdateQuery(item, out parameters);
+            conn.ExecuteNonQuery(query, parameters, txn);
+        }
+
+        public static void Delete(this SqlConnection conn, object item, SqlTransaction txn = null)
+        {
+            Dictionary<string, object> parameters;
+            var query = DbTable.DoBuildDeleteQuery(item, out parameters);
+            conn.ExecuteNonQuery(query, parameters, txn);
+        }
+
+        public static List<T> ReadAll<T>(this SqlConnection conn, SqlTransaction txn = null) where T : new()
         {
             List<T> results;
-            SqlDataReader reader = null;
+
             var fields = DbTable.BuildFieldList(typeof(T));
             var fieldList = string.Join(",", fields);
             var table = DbTable.GetTableName(typeof(T));
             var query = $"SELECT {fieldList} FROM {table}";
-            try
+            using (var reader = conn.GetReader(query, null, txn))
             {
-                reader = conn.GetReader(query, null, transaction);
                 results = reader.ReflectRows<T>();
             }
-            finally
-            {
-                DisposeIfNotNull(reader);
-            }
-            results = results ?? new List<T>();
-            return results;
-        }
-
-        public static bool ReadIntoObject<T>(this SqlConnection conn, string query,
-            Dictionary<string, object> parameters, out T result, SqlTransaction txn = null) where T: new()
-        {    
-            SqlDataReader reader = null;
-            var wasRead = false;
-            result = default(T);
-            try
-            {
-                reader = conn.GetReader(query, parameters, txn);
-                wasRead = reader.ReflectRow<T>(out result);
-            }
-            finally
-            {
-                DisposeIfNotNull(reader);
-            }
-            return wasRead;
+            return results ?? new List<T>();
         }
 
         public static string InsertAndReturnIdent(this SqlConnection conn, object obj, SqlTransaction txn = null)
@@ -56,6 +76,14 @@ namespace ProjectZero.Database.Extensions
             Dictionary<string, object> queryParams;
             var query = DbTable.DoBuildInsertQuery(obj, out queryParams);
             return conn.ExecuteNonQueryReturnIdent(query, queryParams, txn);
+        }
+
+        public static void ExecuteSpNonQuery(this SqlConnection conn, string sproc,
+            Dictionary<string, object> parameters, SqlTransaction txn = null)
+        {
+            var command = BuildCommand(conn, sproc, parameters, txn);
+            command.CommandType = CommandType.StoredProcedure;
+            command.ExecuteNonQuery();
         }
 
         public static int ExecuteNonQuery(this SqlConnection conn, string query, Dictionary<string, object> parameters,
@@ -67,7 +95,8 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        public static string ExecuteNonQueryReturnIdent(this SqlConnection conn, string query, Dictionary<string, object> parameters, SqlTransaction txn)
+        public static string ExecuteNonQueryReturnIdent(this SqlConnection conn, string query,
+            Dictionary<string, object> parameters, SqlTransaction txn)
         {
             using (var command = BuildCommand(conn, query, parameters, txn))
             {
@@ -79,18 +108,10 @@ namespace ProjectZero.Database.Extensions
         public static string ReadOne(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn)
         {
-            string result = "";
-            SqlDataReader reader = null;
-            try
+            using (var reader = conn.GetReader(query, parameters, txn))
             {
-                reader = conn.GetReader(query, parameters, txn);
-                result = reader.ReadOne();
+                return reader.ReadOne();
             }
-            finally
-            {
-                DisposeIfNotNull(reader);
-            }
-            return result;
         }
 
 
@@ -137,11 +158,5 @@ namespace ProjectZero.Database.Extensions
             }
             return command;
         }
-
-        private static void DisposeIfNotNull(IDisposable disposable)
-        {
-            disposable?.Dispose();
-        }
-
     }
 }
