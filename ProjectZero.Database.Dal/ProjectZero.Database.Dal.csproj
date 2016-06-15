@@ -40,10 +40,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="Composite\ArticleTeaserDal.cs" />
+    <Compile Include="Composite\Interfaces\IArticleTeaserDal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tables\ArticlesDal.cs" />
+    <Compile Include="Tables\Interfaces\IArticlesDal.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ProjectZero.Database.Dto\ProjectZero.Database.Dto.csproj">
+      <Project>{A1E2AB62-6861-4867-9DD3-FD1C819FECBE}</Project>
+      <Name>ProjectZero.Database.Dto</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ProjectZero.Database.Extensions\ProjectZero.Database.Extensions.csproj">
       <Project>{432eec51-1546-4f16-9fe4-baaebc06db4c}</Project>
       <Name>ProjectZero.Database.Extensions</Name>

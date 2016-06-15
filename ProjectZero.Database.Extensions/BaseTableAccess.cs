@@ -4,7 +4,17 @@ using System.Data.SqlClient;
 
 namespace ProjectZero.Database.Extensions
 {
-    public abstract class BaseTableAccess<T> : DataSource where T : new()
+    public interface IBaseTableAccess<T> where T : new()
+    {
+        string Insert(object item, SqlTransaction txn = null);
+        T SelectOne(string query, Dictionary<string, object> parameters, SqlTransaction txn = null);
+        List<T> SelectList(string query, Dictionary<string, object> parameters, SqlTransaction txn = null);
+        List<T> SelectAll();
+        void Update(object item, SqlTransaction txn = null);
+        void Delete(object item, SqlTransaction txn = null);
+    }
+
+    public abstract class BaseTableAccess<T> : DataSource, IBaseTableAccess<T> where T : new()
     {
         protected readonly string schema;
         private readonly string connectionString;
@@ -16,7 +26,7 @@ namespace ProjectZero.Database.Extensions
             this.schema = schema;
         }
 
-        public string Insert(object item, SqlTransaction txn = null)
+        public virtual string Insert(object item, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -24,7 +34,7 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        public T SelectOne(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
+        public virtual T SelectOne(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -32,7 +42,7 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        public List<T> SelectList(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
+        public virtual List<T> SelectList(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -42,13 +52,13 @@ namespace ProjectZero.Database.Extensions
 
         public virtual List<T> SelectAll()
         {
-            using (var connection = GetConnection(connectionString))
+            using (var connection = GetConnection())
             {
                 return connection.ReadAll<T>();
             }
         }
 
-        public void Update(object item, SqlTransaction txn = null)
+        public virtual void Update(object item, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -56,7 +66,7 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        public void Delete(object item, SqlTransaction txn = null)
+        public virtual void Delete(object item, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
             {
@@ -64,7 +74,15 @@ namespace ProjectZero.Database.Extensions
             }    
         }
 
-        protected void ExecuteSpNonQuery(string sproc, Dictionary<string, object> parameters, SqlTransaction txn)
+        protected List<T> ReadIntoList(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
+        {
+            using (var conn = GetConnection())
+            {
+                return conn.ReadIntoList<T>(query, parameters, txn);
+            }
+        }
+         
+        protected virtual void ExecuteSpNonQuery(string sproc, Dictionary<string, object> parameters, SqlTransaction txn)
         {
             using (var conn = GetConnection())
             {
@@ -72,7 +90,7 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        protected int ExecuteNonQuery(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
+        protected virtual int ExecuteNonQuery(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
             using (var connection = GetConnection())
             {
@@ -80,7 +98,7 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-        protected String ExecuteNonQueryReturnIdent(string query, Dictionary<string, object> parameters,
+        protected virtual string ExecuteNonQueryReturnIdent(string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null)
         {
 

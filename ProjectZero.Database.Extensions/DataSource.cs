@@ -31,14 +31,10 @@ namespace ProjectZero.Database.Extensions
             {
                 if (ex is InvalidOperationException || ex is SqlException)
                 {
-                    //TODO: Add Logging
                     offline = true;
                     cBreaker.Break();
                 }
-                else
-                {
-                    throw ex;
-                }
+                throw ex;
             }
             return connection;
         }

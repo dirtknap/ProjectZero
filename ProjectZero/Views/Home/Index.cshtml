@@ -1,18 +1,18 @@
-﻿@model IEnumerable<ProjectZero.Models.ArticleTeaser>
+﻿@model IEnumerable<ProjectZero.Database.Dto.Composite.ArticleTeaserDto>
 @{
     ViewBag.Title = "Home Page";
 }
 
-@foreach (var article in Model)
+@foreach (var teaser in Model)
 {
     <div class="frontpage">
-        <h1>@article.Title</h1>
-        <p>@article.TeaserText</p>
+        <h1>@teaser.Name</h1>
+        <p>@teaser.Teaser</p>
         <hr />
-        <p><small>Date Published: @article.Published.DateTime, Last Edited: @article.LastEdited.DateTime</small>        
+        <p><small>Date Published: @teaser.Published.DateTime, Last Edited: @teaser.LastEdited.DateTime</small>        
         </p>
         <p><small>
-        @foreach (var tag in article.Tags)
+        @foreach (var tag in teaser.GetTags())
         {
             <span>#@tag, </span>
         }
