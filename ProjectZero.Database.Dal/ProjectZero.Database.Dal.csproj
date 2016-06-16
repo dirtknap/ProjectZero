@@ -40,7 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Composite\ArticleFullDal.cs" />
     <Compile Include="Composite\ArticleTeaserDal.cs" />
+    <Compile Include="Composite\Interfaces\IArticleFullDal.cs" />
     <Compile Include="Composite\Interfaces\IArticleTeaserDal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tables\ArticlesDal.cs" />

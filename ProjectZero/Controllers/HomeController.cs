@@ -5,7 +5,6 @@ using System.Web.Mvc;
 using Microsoft.Ajax.Utilities;
 using ProjectZero.Database.Dal.Composite;
 using ProjectZero.Database.Dal.Composite.Interfaces;
-using ProjectZero.Database.Dal.Tables.Interfaces;
 using ProjectZero.Database.Dto.Composite;
 using ProjectZero.Models;
 
@@ -24,9 +23,7 @@ namespace ProjectZero.Controllers
         public ActionResult Index()
         {
             var results = teaserDal.GetAllTeasers();
-
-              
-            return View(results);
+                        return View(results);
         }
 
         public ActionResult About()

@@ -23,7 +23,7 @@ namespace ProjectZero.Database.Dal.Composite
             throw new NotImplementedException();
         }
 
-        public List<ArticleTeaserDto> GetArtileTeasersForDateRange(DateTimeOffset start, DateTimeOffset end)
+        public List<ArticleTeaserDto> GetArticleTeasersForDateRange(DateTimeOffset start, DateTimeOffset end)
         {
             throw new NotImplementedException();
         }

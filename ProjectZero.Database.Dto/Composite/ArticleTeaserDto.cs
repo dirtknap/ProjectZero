@@ -7,7 +7,7 @@ using ProjectZero.Database.Extensions;
 
 namespace ProjectZero.Database.Dto.Composite
 {
-    public class ArticleTeaserDto
+    public class ArticleTeaserDto 
     {
         [TableField("Id", IsPk = true, IsIdentity = true)]
         public int Id { get; set; }

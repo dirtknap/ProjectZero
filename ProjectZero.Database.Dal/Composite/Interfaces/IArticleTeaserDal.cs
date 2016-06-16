@@ -8,7 +8,7 @@ namespace ProjectZero.Database.Dal.Composite.Interfaces
     {
         List<ArticleTeaserDto> GetAllTeasers();
         List<ArticleTeaserDto> GetArticleTeasers(List<int> idList);
-        List<ArticleTeaserDto> GetArtileTeasersForDateRange(DateTimeOffset start, DateTimeOffset end);
+        List<ArticleTeaserDto> GetArticleTeasersForDateRange(DateTimeOffset start, DateTimeOffset end);
         List<ArticleTeaserDto> GetLastNArticleTeasers(int number);
         ArticleTeaserDto GetArticleTeaser(int id); 
     }
