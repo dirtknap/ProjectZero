@@ -4,7 +4,7 @@ using ProjectZero.Database.Extensions;
 namespace ProjectZero.Database.Dto.Tables
 {
     [Table("Articles")]
-    public class ArticleDto
+    public class ArticleDto : DbTable
     {
         [TableField("Id", IsPk = true, IsIdentity = true)]
         public int Id { get; set; }

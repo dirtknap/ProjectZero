@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using ProjectZero.Database.Dal.Composite.Interfaces;
+using ProjectZero.Database.Dal.Tables.Interfaces;
 using ProjectZero.Database.Dto.Composite;
 using ProjectZero.Database.Dto.Tables;
 using ProjectZero.Database.Extensions;
 
 namespace ProjectZero.Database.Dal.Composite
 {
-    public class ArticleFullDal : BaseTableAccess<ArticleFullDto>, IArticleFullDal
+    public class ArticleFullDal : BaseCompositeDal<ArticleFullDto>, IArticleFullDal
     {
 
 
@@ -19,21 +20,21 @@ namespace ProjectZero.Database.Dal.Composite
         {
             var id = -1;
 
-            using (var conn = GetConnection())
+            using (var conn = GetConnection(connectionString))
             {
 
-                var result = Insert(article.GetArticleDto());
+                var result = conn.InsertAndReturnIdent(article.GetArticleDto());
                 id = int.Parse(result);
 
-                Insert(new ArticleTextDto {ArticleId= id, Text = article.Text});
+                conn.InsertAndReturnIdent(new ArticleTextDto {ArticleId= id, Text = article.Text});
 
                 foreach (var tag in article.GetTags())
                 {
                     var paramters = new Dictionary<string, object> {{"@text", tag}};
 
-                    var tagId = ExecuteNonQueryReturnIdent(InsertTagQuery(), paramters);
+                    var tagId = conn.ExecuteNonQueryReturnIdent(InsertTagQuery(), paramters, null);
                     
-                    Insert(new ArticleTagsDto {ArticleId = id, TagId = int.Parse(tagId)});
+                    conn.InsertAndReturnIdent(new ArticleTagsDto {ArticleId = id, TagId = int.Parse(tagId)});
                 }
             }
 

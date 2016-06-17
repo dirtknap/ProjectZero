@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectZero.Database.Dto", 
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ProjectZero.Database.Scripts", "ProjectZero.Database.Scripts\ProjectZero.Database.Scripts.sqlproj", "{1071BAE8-7B8D-4BB4-B56C-372CA790FEBF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0DE2E955-0E2A-4794-BC7D-566508AFCDA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectZero.Database.Extensions.Tests", "ProjectZero.Database.Extensions.Tests\ProjectZero.Database.Extensions.Tests.csproj", "{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,8 +51,16 @@ Global
 		{1071BAE8-7B8D-4BB4-B56C-372CA790FEBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1071BAE8-7B8D-4BB4-B56C-372CA790FEBF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1071BAE8-7B8D-4BB4-B56C-372CA790FEBF}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BDEAC9D6-96A2-4A5E-8AFD-197F6A57B822} = {0DE2E955-0E2A-4794-BC7D-566508AFCDA9}
+		{DA9D9BFE-E143-4540-9A56-8E3BF3464DAB} = {0DE2E955-0E2A-4794-BC7D-566508AFCDA9}
 	EndGlobalSection
 EndGlobal

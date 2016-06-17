@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 
 namespace ProjectZero.Database.Extensions
-{
+{ /*
     public interface IBaseTableAccess<T> where T : new()
     {
         string Insert(object item, SqlTransaction txn = null);
@@ -16,6 +16,7 @@ namespace ProjectZero.Database.Extensions
 
     public abstract class BaseTableAccess<T> : DataSource, IBaseTableAccess<T> where T : new()
     {
+        /*
         protected readonly string schema;
         private readonly string connectionString;
         private SqlConnection con;
@@ -26,6 +27,7 @@ namespace ProjectZero.Database.Extensions
             this.schema = schema;
         }
 
+        
         public virtual string Insert(object item, SqlTransaction txn = null)
         {
             using (var conn = GetConnection())
@@ -107,9 +109,11 @@ namespace ProjectZero.Database.Extensions
             }          
         }
         
+        
         protected SqlConnection GetConnection()
         {
             return GetConnection(connectionString);
         }
     }
+    */
 }

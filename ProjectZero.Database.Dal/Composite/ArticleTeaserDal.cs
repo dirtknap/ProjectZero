@@ -6,7 +6,7 @@ using ProjectZero.Database.Extensions;
 
 namespace ProjectZero.Database.Dal.Composite
 {
-    public class ArticleTeaserDal : BaseTableAccess<ArticleTeaserDto>, IArticleTeaserDal
+    public class ArticleTeaserDal : BaseCompositeDal<ArticleTeaserDto>, IArticleTeaserDal
     {
         public ArticleTeaserDal(string connectionString) : base(connectionString, null)
         {
@@ -14,8 +14,11 @@ namespace ProjectZero.Database.Dal.Composite
 
         public List<ArticleTeaserDto> GetAllTeasers()
         {
-            var result = ReadIntoList(BaseQuery(), new Dictionary<string, object>());
-            return result ??  new List<ArticleTeaserDto>();
+            using (var conn = GetConnection(connectionString))
+            {
+                var result = conn.ReadIntoList<ArticleTeaserDto>(BaseQuery(), new Dictionary<string, object>());
+                return result ?? new List<ArticleTeaserDto>();
+            }        
         }
 
         public List<ArticleTeaserDto> GetArticleTeasers(List<int> idList)

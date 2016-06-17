@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace ProjectZero.Database.Extensions
 {
     public class DbTable
     {
+        #region Virtual Methods 
+
         public virtual string BuildInsertQuery(out Dictionary<string, object> queryParams)
         {
             return DoBuildInsertQuery(this, out queryParams);
@@ -21,65 +25,114 @@ namespace ProjectZero.Database.Extensions
             return DoBuildDeleteQuery(this, out queryParams);
         }
 
-        public static string DoBuildDeleteQuery(object targetObj, out Dictionary<string, object> queryParams)
+        public virtual string BuildSelectRowQuery(int id, out Dictionary<string, object> queryParams)
+        {
+            return DoBuildSelectQuery(this, new List<int> {id}, null, out queryParams);
+        }
+
+        public virtual string BuildSelectAllRowsQuery(out Dictionary<string, object> queryParams)
+        {
+            return DoBuildSelectQuery(this, new List<int>(), null, out queryParams);
+        }
+
+        public virtual string BuildSelectedRowsQuery(List<int> ids, out Dictionary<string, object> queryParams)
+        {
+            return DoBuildSelectQuery(this, ids, null, out queryParams);
+        }
+
+        public virtual string BuildSelectTopNRowsQuery(int topN, out Dictionary<string, object> queryParams)
+        {
+            return DoBuildSelectQuery(this, new List<int>(), topN, out queryParams);
+        }
+
+        #endregion
+
+
+
+
+        #region Public Methods
+
+        /// <summary>
+        /// Create query string for inserting DTOs that use the Table and TableField attributes into a SQL database.
+        /// </summary>
+        /// <param name="targetObj">Object to insert.</param>
+        /// <param name="queryParams">SQL parameters for parameterized queries.</param>
+        /// <param name="schema">Schema prefix, if required.</param>
+        /// <returns></returns>
+        public static string DoBuildInsertQuery(object targetObj, out Dictionary<string, object> queryParams,
+            string schema = null)
+        {
+            string fieldList;
+            string paramList;
+            var tableName = GetTableName(targetObj.GetType(), schema);
+            BuildInsertFieldsAndValues(targetObj, out queryParams, out fieldList, out paramList);
+
+            return
+                $"INSERT INTO {(string.IsNullOrEmpty(schema) ? "" : $"[{schema}.]")}{tableName} ({fieldList}) VALUES ({paramList})";
+        }
+
+        /// <summary>
+        /// Create query string for selecting DTOs that use the Table and TableField attributes from a SQL database.
+        /// </summary>
+        /// <param name="targetObj">Object to select.</param>
+        /// <param name="ids">DB identities to select. Empty list signifies SELECT ALL. List is ignored when selecting TOP N.</param>
+        /// <param name="top">Value when selecting TOP N results, otherwise pass null.</param>
+        /// <param name="queryParams">SQL parameters for parameterized queries.</param>
+        /// <param name="schema">Schema prefix, if required.</param>
+        /// <returns></returns>
+        public static string DoBuildSelectQuery(object targetObj, List<int> ids, int? top,
+            out Dictionary<string, object> queryParams, string schema = null)
+        {
+            string identityColumn;
+            queryParams = new Dictionary<string, object>();
+            var tableName = GetTableName(targetObj.GetType(), schema);
+            var fieldList = BuildFieldList(targetObj.GetType(), out identityColumn);
+
+            if (top != null && top > 0)
+            {
+                queryParams = new Dictionary<string, object>();
+                return $"SELECT TOP {top} {fieldList} FROM {tableName} ORDER BY {identityColumn} DESC";
+            }
+
+            if (ids.Count == 0)
+            {
+                queryParams = new Dictionary<string, object>();
+                return $"SELECT {fieldList} FROM {tableName}";
+            }
+
+            if (ids.Count == 1)
+            {
+                queryParams = new Dictionary<string, object> {{"@Id", ids[0]}};
+                return $"SELECT {fieldList} FROM {tableName} WHERE {identityColumn} = @Id";
+            }
+
+            var paramCount = 1;
+
+            foreach (var id in ids)
+            {
+                queryParams[$"@Id_{paramCount}"] = id;
+                paramCount++;
+            }
+
+            return
+                $"SELECT {fieldList} FROM {tableName} WHERE {identityColumn} IN ({string.Join(",", queryParams.Keys.ToList())})";
+        }
+
+        /// <summary>
+        /// Create query string for updating DTOs that use the Table and TableField attributes in a SQL database.
+        /// </summary>
+        /// <param name="targetObj">Object to update</param>
+        /// <param name="queryParams">SQL parameters for parameterized queries.</param>
+        /// /// <param name="schema">Schema prefix, if required.</param>
+        /// <returns></returns>
+        public static string DoBuildUpdateQuery(object targetObj, out Dictionary<string, object> queryParams,
+            string schema = null)
         {
             queryParams = new Dictionary<string, object>();
-
-            string tableName = GetTableName(targetObj);
-            var whereClause = BuildPkWhereClause(targetObj, queryParams);
-
-            if (whereClause.Length == 0)
-            {
-                throw new DbTableException(String.Format("No primary key fields specified in table {0}", tableName));
-            }
-            string queryString = String.Format("DELETE FROM {0} WHERE {1}", tableName, whereClause);
-            return queryString;
-        }
-
-        public static string GetTableName(object targetObj)
-        {
-            var targetType = targetObj.GetType();
-            return GetTableName(targetType);
-        }
-
-        public static string GetTableName(Type targetType)
-        {
-            var attributes = targetType.GetCustomAttributes(typeof(TableAttribute), true) as TableAttribute[];
-            if (attributes == null || attributes.Length != 1)
-            {
-                throw new DbTableException("BuildInsertQuery requires the class to have a [Table] attribute");
-            }
-
-            return attributes[0].TableName;
-        }
-
-        public static List<string> BuildFieldList(Type targetType)
-        {
-            var fields = new List<string>();
-            var propertyInfoList = targetType.GetProperties();
-            foreach (var propertyInfo in propertyInfoList)
-            {
-                var propAtts = propertyInfo.GetCustomAttributes(
-                    typeof(TableFieldAttribute), true) as TableFieldAttribute[];
-
-                // Skip properties that aren't declared with [TableField]
-                if (propAtts.Length == 0)
-                {
-                    continue;
-                }
-
-                fields.Add(propAtts[0].FieldName);
-            }
-            return fields;
-        }
-
-        internal static string DoBuildUpdateQuery(object targetObj, out Dictionary<string, object> queryParams)
-        {
-            queryParams = new Dictionary<string, object>();  
             var modList = new StringBuilder();
             var whereClause = new StringBuilder();
 
-            string tableName = GetTableName(targetObj);
+            string tableName = GetTableName(targetObj.GetType(), schema);
             var propertyInfoList = targetObj.GetType().GetProperties();
 
             foreach (var propertyInfo in propertyInfoList)
@@ -104,15 +157,11 @@ namespace ProjectZero.Database.Extensions
                     {
                         whereClause.Append(" AND ");
                     }
-                    whereClause.Append($"{fieldName}={paramName}");
+                    whereClause.Append($"[{fieldName}]={paramName}");
                 }
                 else
                 {
-                    if (modList.Length > 0)
-                    {
-                        modList.Append(", ");
-                    }
-                    modList.Append($"{fieldName}={paramName}");
+                    modList.Append($"[{fieldName}]={paramName},");
                 }
 
             }
@@ -122,68 +171,185 @@ namespace ProjectZero.Database.Extensions
                 throw new DbTableException($"No primary key fields specified in table {tableName}");
             }
 
-            return $"UPDATE {tableName} SET {modList} WHERE {whereClause}";
+            return $"UPDATE {tableName} SET {modList.ToString().TrimEnd(',')} WHERE {whereClause}";
         }
 
-
-        internal static string DoBuildInsertQuery(object targetObj, out Dictionary<string, object> queryParams,
+        /// <summary>
+        /// Create query string for deleting DTOs that use the Table and TableField attributes from a SQL database.
+        /// </summary>
+        /// <param name="targetObj">Object to update</param>
+        /// <param name="queryParams">SQL parameters for parameterized queries.</param>
+        /// /// <param name="schema">Schema prefix, if required.</param>
+        /// <returns></returns>
+        public static string DoBuildDeleteQuery(object targetObj, out Dictionary<string, object> queryParams,
             string schema = null)
         {
-            StringBuilder fieldList;
-            StringBuilder paramList;
-            string tableName;
-            BuildInsertFieldsAndValues(targetObj, out queryParams, out fieldList, out paramList, out tableName);
+            queryParams = new Dictionary<string, object>();
 
-            if (!string.IsNullOrEmpty(schema))
+            var tableName = GetTableName(targetObj.GetType(), schema);
+            var whereClause = BuildPkWhereClause(targetObj, queryParams);
+
+            if (whereClause.Length == 0)
             {
-                tableName = $"{tableName}.{schema}";
+                throw new DbTableException(String.Format("No primary key fields specified in table {0}", tableName));
             }
-
-            return $"INSERT INTO {tableName} ({fieldList}) VALUES ({paramList})";
+            return $"DELETE FROM {tableName} WHERE {whereClause}";
         }
 
-        private static void BuildInsertFieldsAndValues(object targetObj, out Dictionary<string, object> queryParams, out StringBuilder fieldList, 
-            out StringBuilder paramList, out string tableName)
+
+        /// <summary>
+        /// Get the Table Name for DTOs that use the Table and TableField attributes 
+        /// </summary>
+        /// <param name="targetObj">DTO object</param>
+        /// /// <param name="schema">Schema prefix, if required.</param>
+        /// <returns></returns>
+        public static string GetTableName(object targetObj, string schema = null)
         {
-            queryParams = new Dictionary<string, object>();
-            fieldList = new StringBuilder();
-            paramList = new StringBuilder();
+            var targetType = targetObj.GetType();
+            return GetTableName(targetType, schema);
+        }
 
-            tableName = GetTableName(targetObj);
-            var propertyInfoList = targetObj.GetType().GetProperties();
+        /// <summary>
+        /// Get the Table Name for DTOs that use the Table and TableField attributes 
+        /// </summary>
+        /// <param name="targetType">DTO object</param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        public static string GetTableName(Type targetType, string schema = null)
+        {
+            var attributes = targetType.GetCustomAttributes(typeof (TableAttribute), true) as TableAttribute[];
+            if (attributes == null || attributes.Length != 1)
+            {
+                throw new DbTableException("GetTableName requires the class to have a [Table] attribute");
+            }
 
-            var isFirst = true;
+            if (string.IsNullOrEmpty(schema))
+            {
+                return $"[{attributes[0].TableName}]";
+            }
+
+            return $"[{schema}].[{attributes[0].TableName}]";
+        }
+
+        /// <summary>
+        /// Build a Field lost for a DTOs that use the Table and TableField attributes 
+        /// </summary>
+        /// <param name="targetType">DTO type</param>
+        /// <param name="prefix">prefix if needed, such as table alias in a join statement</param>
+        /// <returns></returns>
+        public static string BuildFieldList(Type targetType, string prefix = "")
+        {
+            var fields = new List<string>();
+            var propertyInfoList = targetType.GetProperties();
             foreach (var propertyInfo in propertyInfoList)
             {
-                var propAttributes = propertyInfo.GetCustomAttributes(typeof (TableFieldAttribute), true) as TableFieldAttribute[];
+                var propAtts =
+                    propertyInfo.GetCustomAttributes(typeof (TableFieldAttribute), true) as TableFieldAttribute[];
 
-                if (propAttributes.Length == 0)
+                if (propAtts == null || propAtts.Length == 0)
                 {
                     continue;
                 }
 
-                if (propAttributes[0].IsIdentity)
+                fields.Add(propAtts[0].FieldName);
+            }
+
+            var sb = new StringBuilder();
+
+            foreach (var field in fields)
+            {
+                sb.Append($"{(string.IsNullOrEmpty(prefix) ? "" : $"[{prefix}].")}[{field}],");
+            }
+
+            return sb.ToString().TrimEnd(',');
+        }
+
+        /// <summary>
+        /// Build a Field lost for a DTOs that use the Table and TableField attributes.
+        /// This method is overloaded to also provide the DTO's Identity column 
+        /// </summary>
+        /// <param name="targetType">DTO type</param>
+        /// <param name="prefix">prefix if needed, such as table alias in a join statement</param>
+        /// <returns></returns>
+        public static string BuildFieldList(Type targetType, out string identityColumn, string prefix = "")
+        {
+            identityColumn = string.Empty;
+
+            var fields = new List<string>();
+            var propertyInfoList = targetType.GetProperties();
+            foreach (var propertyInfo in propertyInfoList)
+            {
+                var propAtts =
+                    propertyInfo.GetCustomAttributes(typeof (TableFieldAttribute), true) as TableFieldAttribute[];
+
+                if (propAtts == null || propAtts.Length == 0)
                 {
                     continue;
                 }
 
-                if (!isFirst)
+                fields.Add(propAtts[0].FieldName);
+
+                if (propAtts[0].IsIdentity)
                 {
-                    fieldList.Append(",");
-                    paramList.Append(",");
+                    identityColumn = $"[{propAtts[0].FieldName}]";
                 }
-                else
+            }
+
+            if (string.IsNullOrEmpty(identityColumn))
+            {
+                throw new DbTableException(
+                    "GetIdentityField requires the class to have a [TableField] attribute set as Identity");
+            }
+
+            var sb = new StringBuilder();
+
+            foreach (var field in fields)
+            {
+                sb.Append($"{(string.IsNullOrEmpty(prefix) ? "" : $"[{prefix}].")}[{field}],");
+            }
+
+            return sb.ToString().TrimEnd(',');
+        }
+
+        #endregion
+
+
+
+
+        #region Private Methods
+
+        private static void BuildInsertFieldsAndValues(object targetObj, out Dictionary<string, object> queryParams,
+            out string fieldList,
+            out string paramList)
+        {
+            queryParams = new Dictionary<string, object>();
+            var fieldBuilder = new StringBuilder();
+            var paramBuilder = new StringBuilder();
+
+            var propertyInfoList = targetObj.GetType().GetProperties();
+
+            foreach (var propertyInfo in propertyInfoList)
+            {
+                var propAttr =
+                    propertyInfo.GetCustomAttributes(typeof (TableFieldAttribute), true) as TableFieldAttribute[];
+
+                if (propAttr == null || propAttr.Length == 0)
                 {
-                    isFirst = false;
+                    continue;
                 }
 
-                var paramName = $"@{propertyInfo.Name}";
-                paramList.Append(paramName);
-                fieldList.Append($"[{propAttributes[0].FieldName}]");
+                if (propAttr[0].IsIdentity)
+                {
+                    continue;
+                }
+
+                var paramName = $"@{propertyInfo.Name},";
+                paramBuilder.Append(paramName);
+                fieldBuilder.Append($"[{propAttr[0].FieldName}],");
 
                 var value = propertyInfo.GetValue(targetObj, null);
 
-                if (propertyInfo.PropertyType == typeof (Guid) && propAttributes[0].IsPk)
+                if (propertyInfo.PropertyType == typeof (Guid) && propAttr[0].IsPk)
                 {
                     var vGuid = (Guid) value;
                     if (vGuid == Guid.Empty)
@@ -196,10 +362,11 @@ namespace ProjectZero.Database.Extensions
                 queryParams[paramName] = value ?? DBNull.Value;
             }
 
-
+            fieldList = fieldBuilder.ToString().TrimEnd(',');
+            paramList = paramBuilder.ToString().TrimEnd(',');
         }
 
-        private static StringBuilder BuildPkWhereClause(object targetObj, Dictionary<string, object> queryParams)
+        private static string BuildPkWhereClause(object targetObj, Dictionary<string, object> queryParams)
         {
             var whereClause = new StringBuilder();
             var propertyInfoList = targetObj.GetType().GetProperties();
@@ -208,9 +375,8 @@ namespace ProjectZero.Database.Extensions
             foreach (var propertyInfo in propertyInfoList)
             {
                 var propAtts = propertyInfo.GetCustomAttributes(
-                    typeof(TableFieldAttribute), true) as TableFieldAttribute[];
+                    typeof (TableFieldAttribute), true) as TableFieldAttribute[];
 
-                // Skip properties that aren't declared with [TableField]
                 if (propAtts == null || propAtts.Length == 0)
                 {
                     continue;
@@ -221,8 +387,7 @@ namespace ProjectZero.Database.Extensions
                     continue;
                 }
 
-                // Pick an arbitrary parameter name
-                var paramName = "@" + propertyInfo.Name;
+                var paramName = $"@{propertyInfo.Name}";
                 var value = propertyInfo.GetValue(targetObj, null);
                 queryParams[paramName] = value;
                 paramCounter++;
@@ -233,21 +398,34 @@ namespace ProjectZero.Database.Extensions
                 {
                     whereClause.Append(" AND ");
                 }
-                whereClause.Append(fieldName + "=" + paramName);
+                whereClause.Append($"[{fieldName}]={paramName},");
             }
-            return whereClause;
+            return whereClause.ToString().TrimEnd(',');
         }
     }
+
+    #endregion
 
     [Serializable]
     public class DbTableException : Exception
     {
-        public DbTableException() { }
-        public DbTableException(string message) : base(message) { }
-        public DbTableException(string message, Exception inner) : base(message, inner) { }
+        public DbTableException()
+        {
+        }
+
+        public DbTableException(string message) : base(message)
+        {
+        }
+
+        public DbTableException(string message, Exception inner) : base(message, inner)
+        {
+        }
+
         protected DbTableException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context)
-            : base(info, context) { }
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context)
+            : base(info, context)
+        {
+        }
     }
 }
