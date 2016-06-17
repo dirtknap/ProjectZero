@@ -30,11 +30,13 @@ namespace ProjectZero.Database.Dal.Composite
 
                 foreach (var tag in article.GetTags())
                 {
-                    var paramters = new Dictionary<string, object> {{"@text", tag}};
+                    var parameters = new Dictionary<string, object> {{"@text", tag}};
 
-                    var tagId = conn.ExecuteNonQueryReturnIdent(InsertTagQuery(), paramters, null);
+                    //var tagId = conn.ExecuteNonQueryReturnIdent(InsertTagQuery(), parameters, null);
+
+                    var tagId = conn.ReadIntoObject<int>(InsertTagQuery(), parameters);
                     
-                    conn.InsertAndReturnIdent(new ArticleTagsDto {ArticleId = id, TagId = int.Parse(tagId)});
+                    conn.InsertAndReturnIdent(new ArticleTagsDto {ArticleId = id, TagId = tagId});
                 }
             }
 
@@ -66,7 +68,7 @@ namespace ProjectZero.Database.Dal.Composite
             throw new NotImplementedException();
         }
 
-        private string BaseQuery()
+        private static string BaseQuery()
         {
             return "SELECT a.Id, a.Name, a.Author, a.LastEdited, a.Published, a.Teaser, a.Active, i.Text, " +
                 "LEFT JOIN ArticleText i ON i.ArticleId = a.Id " +
@@ -77,12 +79,16 @@ namespace ProjectZero.Database.Dal.Composite
                 "FROM Articles a";
         }
 
-        private string InsertTagQuery()
+        private static string InsertTagQuery()
         {
-            return "IF EXISTS (SELECT 1 FROM Tags WHERE Text = @text) " +
-                   "SELECT Id FROM Tags WHERE Text = @text " +
-                   "ELSE " +
-                   "INSERT INTO Tags (Text) VALUES(@text)";
+            return "SELECT @Id = [Id] " +
+                   "FROM [Tags] " +
+                   "WHERE Text = @Text; " +
+                   "IF @Id IS NULL AND @Text IS NOT NULL " +
+                   "BEGIN " +
+                   "INSERT INTO Tags (Text) VALUES(@text) " +
+                   "SET @Id = SCOPE_IDENTITY() " +
+                   "END";
         }
     }
 }

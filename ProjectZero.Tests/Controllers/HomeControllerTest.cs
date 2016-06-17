@@ -10,30 +10,24 @@ namespace ProjectZero.Tests.Controllers
     public class HomeControllerTest
     {
         [TestMethod]
-        public void Index()
+        public void HomeController_Index()
         {
-            // Arrange
             var dal = new Mock<IArticleTeaserDal>();
             var controller = new HomeController(dal.Object);
 
-            // Act
             var result = controller.About() as ViewResult;
 
-            // Assert
             Assert.IsNotNull(result);
         }
 
         [TestMethod]
-        public void About()
+        public void HomeCOntroller_About()
         {
-            // Arrange
             var dal = new Mock<IArticleTeaserDal>();
             var controller = new HomeController(dal.Object);
 
-            // Act
             var result = controller.About() as ViewResult;
 
-            // Assert
             Assert.AreEqual("Project Zero.", result.ViewBag.Message);
         }
 
