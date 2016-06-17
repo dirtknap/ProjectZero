@@ -40,7 +40,7 @@ namespace ProjectZero.Database.Dal.Composite
 
         private string BaseQuery()
         {
-            return "SELECT a.Id, a.Name, a.Author, a.LastEdited, a.Published, a.Teaser, " +
+            return "SELECT a.Id, a.Name, a.Author, a.LastEdited, a.Published, a.Teaser, a.Active, " +
                 "STUFF((SELECT DISTINCT ','+ t.text FROM Tags " +
                 "LEFT JOIN ArticleTags at ON at.ArticleId = a.Id " +
                 "LEFT JOIN Tags t ON t.Id = at.TagId " +

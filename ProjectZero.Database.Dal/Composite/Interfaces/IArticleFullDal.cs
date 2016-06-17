@@ -10,6 +10,7 @@ namespace ProjectZero.Database.Dal.Composite.Interfaces
         List<ArticleFullDto> GetArticleArticles(List<int> idList);
         List<ArticleFullDto> GetArticlesForDateRange(DateTimeOffset start, DateTimeOffset end);
         List<ArticleFullDto> GetLastNArticles(int number);
-        ArticleFullDto GetArticle(int id); 
+        ArticleFullDto GetArticle(int id);
+        int SaveArticle(ArticleFullDto article);
     }
 }

@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[ArticleTags]
 (
-	[Id] INT NOT NULL PRIMARY KEY, 
+	[Id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY, 
     [ArticleId] INT NOT NULL, 
     [TagId] INT NOT NULL, 
     CONSTRAINT [FK_ArticleTags_ToArticles] FOREIGN KEY ([ArticleId]) REFERENCES [Articles]([Id]), 

@@ -92,17 +92,19 @@ namespace ProjectZero.Database.Extensions
 
         protected virtual int ExecuteNonQuery(string query, Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
-            using (var connection = GetConnection())
+            using (var conn = GetConnection())
             {
-                return connection.ExecuteNonQuery(query, parameters, null);
+                return conn.ExecuteNonQuery(query, parameters, null);
             }
         }
 
         protected virtual string ExecuteNonQueryReturnIdent(string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null)
         {
-
-            return txn.Connection.ExecuteNonQueryReturnIdent(query, parameters, txn);
+            using (var conn = GetConnection())
+            {
+                return conn.ExecuteNonQueryReturnIdent(query, parameters, txn);
+            }          
         }
         
         protected SqlConnection GetConnection()

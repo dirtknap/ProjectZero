@@ -46,6 +46,7 @@ namespace ProjectZero.App_Start
 
             // container.RegisterType<IProductRepository, ProductRepository>();
             container.RegisterType<IArticleTeaserDal, ArticleTeaserDal>(new InjectionConstructor(connectionString));
+            container.RegisterType<IArticleFullDal, ArticleFullDal>(new InjectionConstructor(connectionString));
 
             container.RegisterType<DbContext, ApplicationDbContext>(new HierarchicalLifetimeManager());
             container.RegisterType<UserManager<ApplicationUser>>(new HierarchicalLifetimeManager());

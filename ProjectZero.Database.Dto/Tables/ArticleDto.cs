@@ -24,5 +24,9 @@ namespace ProjectZero.Database.Dto.Tables
         [TableField("Teaser")]
         public string Teaser { get; set; }
 
+        [TableField("Active")]
+        public bool Active { get; set; }
+
+
     }
 }

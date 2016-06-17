@@ -27,6 +27,9 @@ namespace ProjectZero.Database.Dto.Composite
         [TableField("Teaser")]
         public string Teaser { get; set; }
 
+        [TableField("Active")]
+        public bool Active { get; set; }
+
         [TableField("Tags")]
         public string Tags { get; set; }
 
