@@ -6,11 +6,13 @@ namespace ProjectZero.Database.Dal.Composite.Interfaces
 {
     public interface IArticleFullDal
     {
-        List<ArticleFullDto> GetAllArticles();
-        List<ArticleFullDto> GetArticleArticles(List<int> idList);
-        List<ArticleFullDto> GetArticlesForDateRange(DateTimeOffset start, DateTimeOffset end);
-        List<ArticleFullDto> GetLastNArticles(int number);
-        ArticleFullDto GetArticle(int id);
         int SaveArticle(ArticleFullDto article);
+        ArticleFullDto Get(int id);
+        List<ArticleFullDto> GetSelected(List<int> idList);
+        List<ArticleFullDto> GetForDateRange(DateTimeOffset start, DateTimeOffset end);
+        List<ArticleFullDto> GetLastN(int number);
+        List<ArticleFullDto> GetAll();
+        void Update(ArticleFullDto article);
+        void Delete(int id);
     }
 }

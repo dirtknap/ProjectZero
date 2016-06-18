@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-
-namespace ProjectZero.Database.Extensions
+﻿namespace ProjectZero.Database.Extensions
 { /*
     public interface IBaseTableAccess<T> where T : new()
     {

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.Eventing.Reader;
 using ProjectZero.Database.Dal.Composite.Interfaces;
-using ProjectZero.Database.Dal.Tables.Interfaces;
 using ProjectZero.Database.Dto.Composite;
 using ProjectZero.Database.Dto.Tables;
 using ProjectZero.Database.Extensions;
@@ -12,9 +8,7 @@ using ProjectZero.Database.Extensions;
 namespace ProjectZero.Database.Dal.Composite
 {
     public class ArticleFullDal : BaseCompositeDal<ArticleFullDto>, IArticleFullDal
-    {
-
-
+    { 
         public ArticleFullDal(string connectionString) : base(connectionString, null)
         {
         }
@@ -47,79 +41,61 @@ namespace ProjectZero.Database.Dal.Composite
             return id;
         }
 
-        public List<ArticleFullDto> GetAllArticles()
-        {
-            using (var conn = GetConnection(connectionString))
-            {
-                var result = conn.ReadIntoList<ArticleFullDto>(BaseQuery(), new Dictionary<string, object>());
-                return result ?? new List<ArticleFullDto>();
-            }
-        }
-
-        public ArticleFullDto GetArticle(int id)
-        {
-            var parameters = new Dictionary<string, object> { {"@Id", id} };
-
-            using (var conn = GetConnection(connectionString))
-            {
-                var result = conn.ReadIntoObject<ArticleFullDto>($"{BaseQuery()} WHERE Id = @Id", parameters);
-                return result ?? new ArticleFullDto();
-            }
-        }
-
-        public List<ArticleFullDto> GetArticleArticles(List<int> idList)
+        public List<ArticleFullDto> GetForDateRange(DateTimeOffset start, DateTimeOffset end)
         {
             throw new NotImplementedException();
         }
 
-        public List<ArticleFullDto> GetArticlesForDateRange(DateTimeOffset start, DateTimeOffset end)
-        {
-            throw new NotImplementedException();
-        }
 
-        public List<ArticleFullDto> GetLastNArticles(int number)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UpdateArticle(ArticleFullDto article)
+        public void Update(ArticleFullDto article)
         {
             using (var conn = GetConnection(connectionString))
             {
-                var parameters = new Dictionary<string, object> { {"@aid", article.Id} };
-                using (var txn = conn.BeginTransaction(IsolationLevel.Serializable))
+                var parameters = new Dictionary<string, object>
                 {
-                    conn.ExecuteNonQuery("DELETE FROM [ArticleTags] WHERE ArticleId = @aid", parameters, txn);
-                }
+                    {"@aid", article.Id},
+                    {"@Name", article.Name },
+                    {"@LastEdited", DateTimeOffset.Now },
+                    {"@Teaser", article.Teaser },
+                    {"@Active", article.Active },
+                    {"@Text", article.Text }
+                };
 
-                using (var txn = conn.BeginTransaction(IsolationLevel.Serializable))
+                conn.ExecuteSpNonQuery("sp_UpdateArticle", parameters);
+
+                foreach (var tag in article.GetTags())
                 {
+                    var tagId = -1;
+                    parameters = new Dictionary<string, object> {{"@text", tag}};
 
-                    foreach (var tag in article.GetTags())
-                    {
-                        var tagId = -1;
-                        parameters = new Dictionary<string, object> { { "@text", tag } };
+                    var dbTag = conn.ExecuteSpReadOne("sp_InsertTag", parameters);
 
-                        var dbTag = conn.ExecuteSpReadOne("sp_InsertTag", parameters);
+                    tagId = int.Parse(dbTag);
 
-                        tagId = int.Parse(dbTag);
-
-                        conn.InsertAndReturnIdent(new ArticleTagsDto { ArticleId = isd, TagId = tagId });
-                    }
+                    conn.InsertAndReturnIdent(new ArticleTagsDto {ArticleId = article.Id, TagId = tagId});
                 }
-                
             }
         }
 
-        private static string BaseQuery()
+        public void Delete(int id)
         {
-            return "SELECT a.Id, a.Name, a.Author, a.LastEdited, a.Published, a.Teaser, a.Active, i.Text, " +
+            var parameter = new Dictionary<string, object> { {"@Id",id} };
+
+            using (var conn = GetConnection(connectionString))
+            {
+                conn.ExecuteSpNonQuery("sp_DeleteArticle", parameter);
+            } 
+        }
+
+        protected override string BaseSelectQuery(int top = 0)
+        {
+            return $"SELECT {(top > 0 ? $"TOP {top}" : "")} a.Id, a.Name, a.Author, a.LastEdited, a.Published, a.Teaser, a.Active, i.Text, " +
                 "LEFT JOIN ArticleText i ON i.ArticleId = a.Id " +
                 "STUFF((SELECT DISTINCT ','+ t.text FROM Tags " +
                 "LEFT JOIN ArticleTags at ON at.ArticleId = a.Id " +
                 "LEFT JOIN Tags t ON t.Id = at.TagId " +
                 "FOR XML PATH('') ), 1, 1,'') [Tags] " +
-                "FROM Articles a";
+                $"FROM Articles a{(top > 0 ? $" ORDER BY a.Id DESC" : "")}";
         }
     }
 }

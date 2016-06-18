@@ -65,5 +65,6 @@
     <Build Include="tbl_Tags.sql" />
     <Build Include="sp_InsertTag.sql" />
     <Build Include="sp_UpdateArticle.sql" />
+    <Build Include="sp_DeleteArticle.sql" />
   </ItemGroup>
 </Project>

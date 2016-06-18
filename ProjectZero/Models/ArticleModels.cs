@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ProjectZero.Database.Dto.Tables;
 
 namespace ProjectZero.Models
 {

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.SqlClient;
-using ProjectZero.Database.Dto.Composite;
 
 namespace ProjectZero.Database.Dal.Tables
 {

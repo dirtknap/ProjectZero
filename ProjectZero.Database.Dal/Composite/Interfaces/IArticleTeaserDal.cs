@@ -6,10 +6,10 @@ namespace ProjectZero.Database.Dal.Composite.Interfaces
 {
     public interface IArticleTeaserDal
     {
-        List<ArticleTeaserDto> GetAllTeasers();
-        List<ArticleTeaserDto> GetArticleTeasers(List<int> idList);
-        List<ArticleTeaserDto> GetArticleTeasersForDateRange(DateTimeOffset start, DateTimeOffset end);
-        List<ArticleTeaserDto> GetLastNArticleTeasers(int number);
-        ArticleTeaserDto GetArticleTeaser(int id); 
+        ArticleTeaserDto Get(int id);
+        List<ArticleTeaserDto> GetSelected(List<int> idList);
+        List<ArticleTeaserDto> GetForDateRange(DateTimeOffset start, DateTimeOffset end);
+        List<ArticleTeaserDto> GetLastN(int number);
+        List<ArticleTeaserDto> GetAll();
     }
 }
