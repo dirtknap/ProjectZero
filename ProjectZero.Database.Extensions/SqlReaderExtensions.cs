@@ -64,7 +64,7 @@ namespace ProjectZero.Database.Extensions
             while (reader.Read())
             {
 
-                // First tiem through, we build out member info map based on the
+                // First time through, we build out member info map based on the
                 // fields returned
                 if (readerIndexToMemberMap == null)
                 {

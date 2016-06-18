@@ -9,6 +9,12 @@ namespace ProjectZero.Database.Extensions
     {
         public static int CommandTimeout { get; set; }
 
+        public static string InsertAndReturnIdent(this SqlConnection conn, object obj, SqlTransaction txn = null)
+        {
+            Dictionary<string, object> queryParams;
+            var query = DbTable.DoBuildInsertQuery(obj, out queryParams);
+            return conn.ExecuteNonQueryReturnIdent(query, queryParams, txn);
+        }
 
         public static T ReadIntoObject<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null) where T : new()
@@ -30,14 +36,32 @@ namespace ProjectZero.Database.Extensions
             return wasRead;
         }
 
-        public static List<T> ReadIntoList<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
+        public static List<T> ReadIntoList<T>(this SqlConnection conn, string query,
+            Dictionary<string, object> parameters,
             SqlTransaction txn = null) where T : new()
         {
             var results = new List<T>();
-            
+
             using (var reader = conn.GetReader(query, parameters, txn))
             {
                 results = reader.ReflectRows<T>();
+                txn?.Commit();
+            }
+            return results ?? new List<T>();
+        }
+
+        public static List<T> ReadAll<T>(this SqlConnection conn, SqlTransaction txn = null) where T : new()
+        {
+            List<T> results;
+
+            var fields = DbTable.BuildFieldList(typeof(T));
+            var fieldList = string.Join(",", fields);
+            var table = DbTable.GetTableName(typeof(T));
+            var query = $"SELECT {fieldList} FROM {table}";
+            using (var reader = conn.GetReader(query, null, txn))
+            {
+                results = reader.ReflectRows<T>();
+                txn?.Commit();
             }
             return results ?? new List<T>();
         }
@@ -56,42 +80,20 @@ namespace ProjectZero.Database.Extensions
             conn.ExecuteNonQuery(query, parameters, txn);
         }
 
-        public static List<T> ReadAll<T>(this SqlConnection conn, SqlTransaction txn = null) where T : new()
-        {
-            List<T> results;
 
-            var fields = DbTable.BuildFieldList(typeof(T));
-            var fieldList = string.Join(",", fields);
-            var table = DbTable.GetTableName(typeof(T));
-            var query = $"SELECT {fieldList} FROM {table}";
-            using (var reader = conn.GetReader(query, null, txn))
-            {
-                results = reader.ReflectRows<T>();
-            }
-            return results ?? new List<T>();
-        }
 
-        public static string InsertAndReturnIdent(this SqlConnection conn, object obj, SqlTransaction txn = null)
-        {
-            Dictionary<string, object> queryParams;
-            var query = DbTable.DoBuildInsertQuery(obj, out queryParams);
-            return conn.ExecuteNonQueryReturnIdent(query, queryParams, txn);
-        }
 
-        public static void ExecuteSpNonQuery(this SqlConnection conn, string sproc,
-            Dictionary<string, object> parameters, SqlTransaction txn = null)
-        {
-            var command = BuildCommand(conn, sproc, parameters, txn);
-            command.CommandType = CommandType.StoredProcedure;
-            command.ExecuteNonQuery();
-        }
+
+
 
         public static int ExecuteNonQuery(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null)
         {
             using (var command = BuildCommand(conn, query, parameters, txn))
             {
-                return command.ExecuteNonQuery();
+                var result = command.ExecuteNonQuery();
+                txn?.Commit();
+                return result;
             }
         }
 
@@ -101,7 +103,31 @@ namespace ProjectZero.Database.Extensions
             using (var command = BuildCommand(conn, query, parameters, txn))
             {
                 command.ExecuteNonQuery();
-                return ReadOne(conn, "SELECT @@IDENTITY as \"Ident\"", null, txn);
+                var result = ReadOne(conn, "SELECT @@IDENTITY as \"Ident\"", null, txn);
+                txn?.Commit();
+                return result;
+            }
+        }
+
+        public static void ExecuteSpNonQuery(this SqlConnection conn, string sproc,
+            Dictionary<string, object> parameters, SqlTransaction txn = null)
+        {
+            var command = BuildCommand(conn, sproc, parameters, txn);
+            command.CommandType = CommandType.StoredProcedure;
+            command.ExecuteNonQuery();
+            txn?.Commit();
+        }
+
+        public static string ExecuteSpReadOne(this SqlConnection conn, string sproc,
+            Dictionary<string, object> parameters, SqlTransaction txn = null)
+        {
+            var command = BuildCommand(conn, sproc, parameters, txn);
+            command.CommandType = CommandType.StoredProcedure;
+            using (var reader = command.ExecuteReader())
+            {
+                var result = reader.ReadOne();
+                txn?.Commit();
+                return result;
             }
         }
 
@@ -110,20 +136,23 @@ namespace ProjectZero.Database.Extensions
         {
             using (var reader = conn.GetReader(query, parameters, txn))
             {
-                return reader.ReadOne();
+                var result = reader.ReadOne();
+                txn?.Commit();
+                return result;
             }
         }
 
 
         public static SqlDataReader GetReader(this SqlConnection conn, string query,
-            Dictionary<string, object> parameters, SqlTransaction transaction = null)
+            Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
-            using (var command = BuildCommand(conn, query, parameters, transaction))
+            using (var command = BuildCommand(conn, query, parameters, txn))
             {
                 SqlDataReader reader;
                 try
                 {
                     reader = command.ExecuteReader();
+                    txn?.Commit();
                 }
                 catch (Exception ex)
                 {
