@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using ProjectZero.Database.Dal.Composite.Interfaces;
 using ProjectZero.Database.Dal.Tables.Interfaces;
 using ProjectZero.Database.Dto.Composite;
@@ -30,11 +31,19 @@ namespace ProjectZero.Database.Dal.Composite
 
                 foreach (var tag in article.GetTags())
                 {
+                    var tagId = -1;
                     var parameters = new Dictionary<string, object> {{"@text", tag}};
 
-                    //var tagId = conn.ExecuteNonQueryReturnIdent(InsertTagQuery(), parameters, null);
+                    var dbTag = conn.ReadIntoObject<TagDto>(getTagByText, parameters);
 
-                    var tagId = conn.ReadIntoObject<int>(InsertTagQuery(), parameters);
+                    if (dbTag == null)
+                    {
+                        tagId = int.Parse(conn.InsertAndReturnIdent(new TagDto {Text = tag}));
+                    }
+                    else
+                    {
+                        tagId = dbTag.Id;
+                    }                
                     
                     conn.InsertAndReturnIdent(new ArticleTagsDto {ArticleId = id, TagId = tagId});
                 }
@@ -79,16 +88,6 @@ namespace ProjectZero.Database.Dal.Composite
                 "FROM Articles a";
         }
 
-        private static string InsertTagQuery()
-        {
-            return "SELECT @Id = [Id] " +
-                   "FROM [Tags] " +
-                   "WHERE Text = @Text; " +
-                   "IF @Id IS NULL AND @Text IS NOT NULL " +
-                   "BEGIN " +
-                   "INSERT INTO Tags (Text) VALUES(@text) " +
-                   "SET @Id = SCOPE_IDENTITY() " +
-                   "END";
-        }
+        private readonly string getTagByText = "SELECT [Id],[Text] FROM [Tags] WHERE [Text] = @Text";
     }
 }

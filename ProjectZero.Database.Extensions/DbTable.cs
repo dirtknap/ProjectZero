@@ -343,8 +343,8 @@ namespace ProjectZero.Database.Extensions
                     continue;
                 }
 
-                var paramName = $"@{propertyInfo.Name},";
-                paramBuilder.Append(paramName);
+                var paramName = $"@{propertyInfo.Name}";
+                paramBuilder.Append($"{paramName},");
                 fieldBuilder.Append($"[{propAttr[0].FieldName}],");
 
                 var value = propertyInfo.GetValue(targetObj, null);
@@ -398,9 +398,9 @@ namespace ProjectZero.Database.Extensions
                 {
                     whereClause.Append(" AND ");
                 }
-                whereClause.Append($"[{fieldName}]={paramName},");
+                whereClause.Append($"[{fieldName}]={paramName}");
             }
-            return whereClause.ToString().TrimEnd(',');
+            return whereClause.ToString();
         }
     }
 

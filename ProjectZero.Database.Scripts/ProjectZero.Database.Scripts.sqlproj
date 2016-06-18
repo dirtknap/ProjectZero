@@ -59,9 +59,10 @@
     <Folder Include="Properties" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Articles.sql" />
-    <Build Include="ArticleText.sql" />
-    <Build Include="ArticleTags.sql" />
-    <Build Include="Tags.sql" />
+    <Build Include="tbl_Articles.sql" />
+    <Build Include="tbl_ArticleText.sql" />
+    <Build Include="tbl_ArticleTags.sql" />
+    <Build Include="tbl_Tags.sql" />
+    <Build Include="sp_InsertTag.sql" />
   </ItemGroup>
 </Project>
