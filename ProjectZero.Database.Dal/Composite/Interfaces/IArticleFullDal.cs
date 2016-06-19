@@ -6,6 +6,8 @@ namespace ProjectZero.Database.Dal.Composite.Interfaces
 {
     public interface IArticleFullDal
     {
+        void SetActive(int id, bool active);
+
         int SaveArticle(ArticleFullDto article);
         ArticleFullDto Get(int id);
         List<ArticleFullDto> GetSelected(List<int> idList);

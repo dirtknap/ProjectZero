@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.SqlClient;
 using ProjectZero.Database.Extensions;
 
@@ -8,7 +7,7 @@ namespace ProjectZero.Database.Dal.Tables.Interfaces
     public abstract class BaseTableDal<T> : DataSource, ISimpleCrudDal<T> where T : DbTable, new ()
     {
         protected readonly string schema;
-        private readonly string connectionString;
+        protected readonly string connectionString;
 
         protected BaseTableDal(string connectionString, string schema = null)
         {
@@ -20,49 +19,71 @@ namespace ProjectZero.Database.Dal.Tables.Interfaces
         {
             using (var conn = GetConnection(connectionString))
             {
-                var result = conn.InsertAndReturnIdent(item, txn);
-                if (string.IsNullOrEmpty(result))
-                {
-                    return -1;
-                }
-                return int.Parse(result);
+                return int.Parse(conn.InsertAndReturnIdent(item, txn));
             }
         }
 
         public T Get(int id, SqlTransaction txn = null)
         {
+            var parameters = new Dictionary<string, object>();
+            var query = new T().BuildSelectRowQuery(id, out parameters);
+
+            using (var conn = GetConnection(connectionString))
+            { 
+                return conn.ReadIntoObject<T>(query, parameters, txn);
+            }
+        }
+
+        public List<T> GetSelected(List<int> idList, SqlTransaction txn = null)
+        {
+            var parameters = new Dictionary<string, object>();
+            var query = new T().BuildSelectedRowsQuery(idList, out parameters);
+
             using (var conn = GetConnection(connectionString))
             {
-                var parameters = new Dictionary<string, object>();
-                var query = new T().BuildInsertQuery(out parameters);
-                
-                return conn.ReadIntoObject<T>(query, parameters, txn);
+                return conn.ReadIntoList<T>(query, parameters, txn);
+            }
+        }
+
+        public List<T> GetNewestN(int number, SqlTransaction txn = null)
+        {
+            var parameters = new Dictionary<string, object>();
+            var query = new T().BuildSelectTopNRowsQuery(number, out parameters);
+
+            using (var conn = GetConnection(connectionString))
+            {
+                return conn.ReadIntoList<T>(query, parameters, txn);
             }
         }
 
         public List<T> GetAll(SqlTransaction txn = null)
         {
-            throw new NotImplementedException();
+            var parameters = new Dictionary<string, object>();
+            var query = new T().BuildSelectAllRowsQuery(out parameters);
+
+            using (var conn = GetConnection(connectionString))
+            {
+                return conn.ReadIntoList<T>(query, parameters, txn);
+            }
         }
 
-        public List<T> GetSelected(List<int> idList, SqlTransaction txn = null)
+        public void Update(T item, SqlTransaction txn = null)
         {
-            throw new NotImplementedException();
+            using (var conn = GetConnection(connectionString))
+            {
+                conn.Update(item, txn);
+            }
         }
 
-        public List<T> GetNewestN(int number, SqlTransaction txn = null)
+        public virtual void Delete(int id, SqlTransaction txn = null)
         {
-            throw new NotImplementedException();
-        }
+            var parameters = new Dictionary<string, object>();
+            var query = new T().BuildDeleteQuery(out parameters);
 
-        public int Update(T item, SqlTransaction txn = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Delete(int id, SqlTransaction txn = null)
-        {
-            throw new NotImplementedException();
+            using (var conn = GetConnection(connectionString))
+            {
+                conn.ExecuteNonQuery(query, parameters, txn);
+            }
         }
     }
 }

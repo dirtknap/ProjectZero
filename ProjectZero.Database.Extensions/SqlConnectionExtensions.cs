@@ -7,8 +7,18 @@ namespace ProjectZero.Database.Extensions
 {
     public static class SqlConnectionExtensions
     {
+        /// <summary>
+        /// Modify the SQL Command Timeout
+        /// </summary>
         public static int CommandTimeout { get; set; }
 
+        /// <summary>
+        /// Insert an object that uses the Table and TableField attributes into a SQL database
+        /// </summary>
+        /// <param name="conn">SQL connnection</param>
+        /// <param name="obj">Object to insert</param>
+        /// <param name="txn">SQL transaction if required</param>
+        /// <returns>Identity column value in string format</returns>
         public static string InsertAndReturnIdent(this SqlConnection conn, object obj, SqlTransaction txn = null)
         {
             Dictionary<string, object> queryParams;
@@ -16,28 +26,36 @@ namespace ProjectZero.Database.Extensions
             return conn.ExecuteNonQueryReturnIdent(query, queryParams, txn);
         }
 
+        /// <summary>
+        /// Read and return an object that uses Table and TableField attributes from a SQL database 
+        /// </summary>
+        /// <typeparam name="T">Type of object to return</typeparam>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>object from database</returns>
         public static T ReadIntoObject<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null) where T : new()
         {
-            T item;
-            ReadIntoObject<T>(conn, query, parameters, out item, txn);
+            var item = default(T);
+            using (var reader = conn.GetReader(query, parameters, txn))
+            {
+                reader.ReflectRow<T>(out item);
+            }
             return item;
         }
 
-        public static bool ReadIntoObject<T>(this SqlConnection conn, string query,
-            Dictionary<string, object> parameters, out T result, SqlTransaction txn = null) where T : new()
-        {
-            var wasRead = false;
-            result = default(T);
-            using (var reader = conn.GetReader(query, parameters, txn))
-            {
-                wasRead = reader.ReflectRow<T>(out result);
-            }
-            return wasRead;
-        }
-
-        public static List<T> ReadIntoList<T>(this SqlConnection conn, string query,
-            Dictionary<string, object> parameters,
+        /// <summary>
+        /// Read and return a list of selected objects that use the Table and TableField attribute from a SQL database 
+        /// </summary>
+        /// <typeparam name="T">Type of object to return</typeparam>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>Seleceted list of objects</returns>
+        public static List<T> ReadIntoList<T>(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null) where T : new()
         {
             var results = new List<T>();
@@ -50,6 +68,13 @@ namespace ProjectZero.Database.Extensions
             return results ?? new List<T>();
         }
 
+        /// <summary>
+        /// Read and return a list of all objects that use the Table and TableField in a SQL database table
+        /// </summary>
+        /// <typeparam name="T">Type of object to return</typeparam>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>List of all objects in table</returns>
         public static List<T> ReadAll<T>(this SqlConnection conn, SqlTransaction txn = null) where T : new()
         {
             List<T> results;
@@ -66,6 +91,12 @@ namespace ProjectZero.Database.Extensions
             return results ?? new List<T>();
         }
 
+        /// <summary>
+        /// Update the database entry for an object that uses the Table and TableField attributes
+        /// </summary>
+        /// <param name="conn">SQL connnection</param>
+        /// <param name="obj">Object to update</param>
+        /// <param name="txn">SQL transaction if required</param>
         public static void Update(this SqlConnection conn, object item, SqlTransaction txn = null)
         {
             Dictionary<string, object> parameters;
@@ -73,6 +104,12 @@ namespace ProjectZero.Database.Extensions
             conn.ExecuteNonQuery(query, parameters, txn);
         }
 
+        /// <summary>
+        /// Delete the database entry for an object that uses the Table and TableField attributes
+        /// </summary>
+        /// <param name="conn">SQL connnection</param>
+        /// <param name="obj">Object to delete</param>
+        /// <param name="txn">SQL transaction if required</param>
         public static void Delete(this SqlConnection conn, object item, SqlTransaction txn = null)
         {
             Dictionary<string, object> parameters;
@@ -80,12 +117,14 @@ namespace ProjectZero.Database.Extensions
             conn.ExecuteNonQuery(query, parameters, txn);
         }
 
-
-
-
-
-
-
+        /// <summary>
+        /// Execute a SQL Query.  If the query returns a integer value Identity, that value will be returned
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>Integer retrun value from query</returns>
         public static int ExecuteNonQuery(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn = null)
         {
@@ -97,6 +136,14 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
+        /// <summary>
+        /// Execute SQL query and return @@IDENTITY from the action
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>SQL @@IDENTITY for query</returns>
         public static string ExecuteNonQueryReturnIdent(this SqlConnection conn, string query,
             Dictionary<string, object> parameters, SqlTransaction txn)
         {
@@ -109,6 +156,13 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
+        /// <summary>
+        /// Run stored procedure in SQL database
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="sproc">name of stored procedure</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
         public static void ExecuteSpNonQuery(this SqlConnection conn, string sproc,
             Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
@@ -118,6 +172,14 @@ namespace ProjectZero.Database.Extensions
             txn?.Commit();
         }
 
+        /// <summary>
+        /// Run stored procedure in SQL database and return a value select in the procedure
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="sproc">name of stored procedure</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns>string value selected in stored procedure</returns>
         public static string ExecuteSpReadOne(this SqlConnection conn, string sproc,
             Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
@@ -131,6 +193,14 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
+        /// <summary>
+        /// Get first result from the associate SQL Reader of a SQL command
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns></returns>
         public static string ReadOne(this SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction txn)
         {
@@ -142,7 +212,14 @@ namespace ProjectZero.Database.Extensions
             }
         }
 
-
+        /// <summary>
+        /// Construct SQL Command and return the associated reader
+        /// </summary>
+        /// <param name="conn">SQL connection</param>
+        /// <param name="query">SQL query</param>
+        /// <param name="parameters">Query parameters</param>
+        /// <param name="txn">Transaction if required</param>
+        /// <returns></returns>
         public static SqlDataReader GetReader(this SqlConnection conn, string query,
             Dictionary<string, object> parameters, SqlTransaction txn = null)
         {
@@ -161,6 +238,7 @@ namespace ProjectZero.Database.Extensions
                 return reader;
             }
         }
+
 
         private static SqlCommand BuildCommand(SqlConnection conn, string query, Dictionary<string, object> parameters,
             SqlTransaction transaction)

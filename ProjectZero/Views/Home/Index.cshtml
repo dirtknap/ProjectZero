@@ -5,6 +5,9 @@
 
 @foreach (var teaser in Model)
 {
+    <div>
+        <hr />
+    </div>
     <div class="frontpage">
         <h1>@teaser.Name</h1>
         <p>@teaser.Teaser</p>
@@ -17,10 +20,6 @@
             <span>#@tag, </span>
         }
         </small></p>
-    </div>
-
-    <div>
-        <hr />
     </div>
 }
 

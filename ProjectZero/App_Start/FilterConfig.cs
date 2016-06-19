@@ -1,4 +1,5 @@
 ﻿using System.Web.Mvc;
+using ProjectZero.Utils;
 
 namespace ProjectZero
 {
@@ -7,6 +8,7 @@ namespace ProjectZero
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
             filters.Add(new HandleErrorAttribute());
+            filters.Add(new RequireSecureConnectionFilter());
         }
     }
 }

@@ -4,9 +4,12 @@ using ProjectZero.Database.Extensions.Utils;
 
 namespace ProjectZero.Database.Extensions
 {
+    /// <summary>
+    /// Provides method for getting SQL connection.  Includes circuit breaker to prevent DB spamming in
+    /// the case of DB communication issues
+    /// </summary>
     public class DataSource
     {
-        // to prevent spamming the DB should there be an issue
         protected bool offline = true;
         private CircuitBreaker cBreaker = new CircuitBreaker(1 * 60 * 1000);
 
@@ -15,6 +18,11 @@ namespace ProjectZero.Database.Extensions
             
         }
 
+        /// <summary>
+        /// Returns a SQL Connection using the supplied connection string
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
         protected SqlConnection GetConnection(string connectionString)
         {
             SqlConnection connection = new SqlConnection(connectionString);

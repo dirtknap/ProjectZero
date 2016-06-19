@@ -48,7 +48,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tables\ArticlesDal.cs" />
     <Compile Include="Tables\Interfaces\BaseTableDal.cs" />
+    <Compile Include="Tables\Interfaces\IArticleDal.cs" />
     <Compile Include="Tables\Interfaces\ISimpleCrudDal.cs" />
+    <Compile Include="Tables\TagsDal.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ProjectZero.Database.Dto\ProjectZero.Database.Dto.csproj">

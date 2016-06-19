@@ -13,13 +13,22 @@ namespace ProjectZero.Database.Dal.Composite
         {
         }
 
+        public void SetActive(int id, bool active)
+        {
+            var parameters = new Dictionary<string, object> { {"@Id", id}, {"@Active", active} };
+
+            using (var conn = GetConnection(connectionString))
+            {
+                conn.ExecuteNonQuery("UPDATE [Articles] SET [Active] = @Active WHERE Id = @Id", parameters);
+            }
+        }
+
         public int SaveArticle(ArticleFullDto article)
         {
             var id = -1;
 
             using (var conn = GetConnection(connectionString))
             {
-
                 var result = conn.InsertAndReturnIdent(article.GetArticleDto());
                 id = int.Parse(result);
 
@@ -43,9 +52,14 @@ namespace ProjectZero.Database.Dal.Composite
 
         public List<ArticleFullDto> GetForDateRange(DateTimeOffset start, DateTimeOffset end)
         {
-            throw new NotImplementedException();
-        }
+            var parameters = new Dictionary<string, object> { { "@start", start }, { "@end", end } };
 
+            using (var conn = GetConnection(connectionString))
+            {
+                var result = conn.ReadIntoList<ArticleFullDto>($"{BaseSelectQuery()} WHERE Published > @start AND Published < @end", parameters);
+                return result ?? new List<ArticleFullDto>();
+            }
+        }
 
         public void Update(ArticleFullDto article)
         {

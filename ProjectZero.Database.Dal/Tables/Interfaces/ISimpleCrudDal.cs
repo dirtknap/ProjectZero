@@ -10,7 +10,7 @@ namespace ProjectZero.Database.Dal.Tables
         List<T> GetAll(SqlTransaction txn = null);
         List<T> GetSelected(List<int> idList, SqlTransaction txn = null);
         List<T> GetNewestN(int number, SqlTransaction txn = null);
-        int Update(T item, SqlTransaction txn = null);
+        void Update(T item, SqlTransaction txn = null);
         void Delete(int id, SqlTransaction txn = null);
     }
 }

@@ -1,0 +1,33 @@
+﻿@model ProjectZero.Models.AdminMenu
+@{
+    ViewBag.Title = "Administration";
+}
+
+<div class="colmask leftmenu">
+    <div class="colright">
+        <div class="col1wrap">
+            <div id="settingsView" class="col1">
+                <p>Lorem ipsum dolor sit amet, no eum nibh mundi ocurreret, ridens impetus mediocritatem mea ne. Per dicta efficiantur in, phaedrum singulis pri ea. Ubique tibique his ad. Pro quidam mnesarchum omittantur id, cum dicat minim at. Erant legendos evertitur eos eu, quas facilisi persequeris per ex, cu reque forensibus per. Nec omnes iuvaret insolens et. Nibh case instructior eam ex, mel ne incorrupte mediocritatem.
+
+                    Et essent scribentur mei, audire evertitur sit ea. Vim dicam dicunt rationibus ad, an eius integre has. Ei per melius postulant appellantur, vim at melius audire efficiantur. Mucius tincidunt omittantur eos ex. Id nec ubique referrentur, at malis malorum blandit sed. Vel odio magna causae no. At mea nemore volutpat, quas debet imperdiet nec ut.
+
+                    An duo pertinax platonem, pro delectus consetetur contentiones at. Ius molestie iracundia interesset ex, te dicta possit cum. Posse reformidans an per, nonumes epicurei oportere sit ea, putant denique iracundia ei quo. Delenit splendide neglegentur eu qui, essent equidem pro in. Nam an errem accommodare. Mei augue albucius explicari cu, agam causae intellegebat id quo.
+
+                    Ne putant offendit euripidis nec, habeo idque fuisset sea et, facer solet ei est. Vix at sale iisque, mel ad meis augue propriae. Cum quot tritani mandamus in. Ne est ancillae atomorum vituperatoribus, eos an debitis definiebas. Vis dico periculis ex, id sea cibo paulo habemus. Te sit case facete civibus, id eam menandri deserunt conclusionemque.
+
+                    Quo id nusquam hendrerit conceptam, mollis theophrastus per et. Ne nostro delenit consectetuer eos, ex duo lobortis prodesset. Dicunt cetero timeam ei per, eu est nusquam assentior quaerendum, duo brute facilis adversarium te. Vidisse mediocrem ius ea.</p>
+            </div>
+        </div>
+        <div class="col2">
+            @foreach (var section in Model.AdminSections)
+            {
+                <h4>@(section.SectionName)</h4>
+                foreach (var page in section.AdminPages)
+                {
+                    <p>@Ajax.ActionLink(page.DisplayName, page.ControllerAction, new {id = Model.IdCounter}, new AjaxOptions {UpdateTargetId = "settingsView"})</p>
+                }
+            }
+        </div>
+    </div>
+</div>
+

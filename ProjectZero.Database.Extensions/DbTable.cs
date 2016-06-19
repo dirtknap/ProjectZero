@@ -391,7 +391,6 @@ namespace ProjectZero.Database.Extensions
                 queryParams[paramName] = value;
                 paramCounter++;
 
-                // Add the field name and the parameter name to the where clause
                 var fieldName = propAtts[0].FieldName;
                 if (whereClause.Length > 0)
                 {

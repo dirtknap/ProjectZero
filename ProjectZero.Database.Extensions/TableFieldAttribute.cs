@@ -5,18 +5,29 @@ namespace ProjectZero.Database.Extensions
     [AttributeUsage(AttributeTargets.Property)]
     public class TableFieldAttribute : Attribute
     {
+        /// <summary>
+        /// Database Field name the corresponds to this property
+        /// </summary>
         public readonly string FieldName;
         
-        // primary key
+        /// <summary>
+        /// Field is primary key
+        /// </summary>
         public bool IsPk { get; set; }
 
-        // identity field
+        /// <summary>
+        /// Field is identity
+        /// </summary>
         public bool IsIdentity { get; set; }
 
-        // foreign key
+        /// <summary>
+        /// Field is foriegn key constraint
+        /// </summary>
         public bool IsFk { get { return !string.IsNullOrWhiteSpace(ForeignKey); } }
 
-        // foreign key value
+        /// <summary>
+        /// Value of foriegn key constraint
+        /// </summary>
         public string ForeignKey { get; set; }
 
         public TableFieldAttribute(string fieldName)

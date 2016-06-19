@@ -5,7 +5,7 @@ namespace ProjectZero.Controllers
 {
     public class HomeController : Controller
     {
-        private IArticleTeaserDal teaserDal;
+        private readonly IArticleTeaserDal teaserDal;
 
 
         public HomeController(IArticleTeaserDal teaserDal)
@@ -15,7 +15,7 @@ namespace ProjectZero.Controllers
 
         public ActionResult Index()
         {
-            var results = teaserDal.GetAllTeasers();
+            var results = teaserDal.GetAll();
                         return View(results);
         }
 
