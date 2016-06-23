@@ -6,7 +6,7 @@
 <div class="colmask leftmenu">
     <div class="colright">
         <div class="col1wrap">
-            <div id="settingsView" class="col1">
+            <div id="settingsview" class="col1">
                 <p>Lorem ipsum dolor sit amet, no eum nibh mundi ocurreret, ridens impetus mediocritatem mea ne. Per dicta efficiantur in, phaedrum singulis pri ea. Ubique tibique his ad. Pro quidam mnesarchum omittantur id, cum dicat minim at. Erant legendos evertitur eos eu, quas facilisi persequeris per ex, cu reque forensibus per. Nec omnes iuvaret insolens et. Nibh case instructior eam ex, mel ne incorrupte mediocritatem.
 
                     Et essent scribentur mei, audire evertitur sit ea. Vim dicam dicunt rationibus ad, an eius integre has. Ei per melius postulant appellantur, vim at melius audire efficiantur. Mucius tincidunt omittantur eos ex. Id nec ubique referrentur, at malis malorum blandit sed. Vel odio magna causae no. At mea nemore volutpat, quas debet imperdiet nec ut.
@@ -24,10 +24,12 @@
                 <h4>@(section.SectionName)</h4>
                 foreach (var page in section.AdminPages)
                 {
-                    <p>@Ajax.ActionLink(page.DisplayName, page.ControllerAction, new {id = Model.IdCounter}, new AjaxOptions {UpdateTargetId = "settingsView"})</p>
+                    <p><a href="#" data-target="settingsview" data-action="@page.ControllerAction" data-controller="@ViewBag.Title" class="actionlink">@page.DisplayName</a></p>
                 }
             }
         </div>
     </div>
 </div>
+
+
 

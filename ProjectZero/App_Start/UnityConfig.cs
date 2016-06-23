@@ -7,6 +7,8 @@ using Microsoft.Practices.Unity;
 using ProjectZero.Controllers;
 using ProjectZero.Database.Dal.Composite;
 using ProjectZero.Database.Dal.Composite.Interfaces;
+using ProjectZero.Database.Dal.Tables;
+using ProjectZero.Database.Dto.Tables;
 using ProjectZero.Models;
 
 namespace ProjectZero.App_Start
@@ -46,7 +48,9 @@ namespace ProjectZero.App_Start
             // container.RegisterType<IProductRepository, ProductRepository>();
             container.RegisterType<IArticleTeaserDal, ArticleTeaserDal>(new InjectionConstructor(connectionString));
             container.RegisterType<IArticleFullDal, ArticleFullDal>(new InjectionConstructor(connectionString));
+            container.RegisterType<ISimpleCrudDal<ArticleDto>, ArticlesDal>(new InjectionConstructor(connectionString));
 
+           
             container.RegisterType<DbContext, ApplicationDbContext>(new HierarchicalLifetimeManager());
             container.RegisterType<UserManager<ApplicationUser>>(new HierarchicalLifetimeManager());
             container.RegisterType<IUserStore<ApplicationUser>, UserStore<ApplicationUser>>(new HierarchicalLifetimeManager());
